@@ -23,7 +23,7 @@ Flannel must used in kubernetes cluster. (follow up Coreos configuration)
 ### 2.2) Edit File: calico-secret.yaml
 * Repalce 1st <BASE64_ENCODE> with base64 encode of etcd-key  (etcd client private-key.pem)
 * Repalce 2nd <BASE64_ENCODE> with base64 encode of etcd-cert (etcd client public-key.pem)
-* Repalce 1st <BASE64_ENCODE> with base64 encode of etcd-ca   (etcd ca public-key.pem)
+* Repalce 3rd <BASE64_ENCODE> with base64 encode of etcd-ca   (etcd ca public-key.pem)
 
 ### 2.3) Run with kubectl
 ```
