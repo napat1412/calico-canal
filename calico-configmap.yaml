@@ -1,0 +1,42 @@
+# This ConfigMap is used to configure a self-hosted Calico installation.
+# Documentation: http://docs.projectcalico.org/v1.6/getting-started/kubernetes/installation/hosted/
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: calico-config
+  namespace: kube-system
+data:
+  # Configure this with the location of your etcd cluster.
+  # etcd_endpoints: "$ETCDENDPOINTS"
+  etcd_endpoints: "https://etcd1.k8slab.local:2379"
+
+  # Configure the Calico backend to use.
+  calico_backend: "none"
+
+  # Config key needed for calico-cni
+  cni_network_config: |-
+    {
+        "name": "calico",
+        "type": "flannel",
+        "delegate": {
+          "type": "calico",
+          "etcd_endpoints": "__ETCD_ENDPOINTS__",
+          "etcd_key_file": "__ETCD_KEY_FILE__",
+          "etcd_cert_file": "__ETCD_CERT_FILE__",
+          "etcd_ca_cert_file": "__ETCD_CA_CERT_FILE__",
+          "log_level": "info",
+          "policy": {
+              "type": "k8s",
+              "k8s_api_root": "https://__KUBERNETES_SERVICE_HOST__:__KUBERNETES_SERVICE_PORT__",
+              "k8s_auth_token": "__SERVICEACCOUNT_TOKEN__"
+          },
+          "kubernetes": {
+              "kubeconfig": "/etc/kubernetes/cni/net.d/__KUBECONFIG_FILENAME__"
+          }
+        }
+    }
+
+  # You must also populate the Secret below with these files.
+  etcd_ca: "/calico-secrets/etcd-ca"
+  etcd_cert: "/calico-secrets/etcd-cert"
+  etcd_key: "/calico-secrets/etcd-key"
