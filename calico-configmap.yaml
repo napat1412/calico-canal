@@ -1,5 +1,11 @@
+# Calico Version v2.3.0
+# https://docs.projectcalico.org/v2.3/releases#v2.3.0
+# This manifest includes the following component versions:
+#   calico/node:v1.3.0
+#   calico/cni:v1.9.1
+#   calico/kube-policy-controller:v0.6.0
+
 # This ConfigMap is used to configure a self-hosted Calico installation.
-# Documentation: http://docs.projectcalico.org/v1.6/getting-started/kubernetes/installation/hosted/
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -7,8 +13,8 @@ metadata:
   namespace: kube-system
 data:
   # Configure this with the location of your etcd cluster.
-  # etcd_endpoints: "$ETCDENDPOINTS"
-  etcd_endpoints: "https://etcd1.k8slab.local:2379"
+  etcd_endpoints: "${ETCD_ENDPOINTS}"
+  #etcd_endpoints: "https://172.16.0.213:2379,https://172.16.0.214:2379"
 
   # Configure the Calico backend to use.
   calico_backend: "none"
@@ -21,9 +27,9 @@ data:
         "delegate": {
           "type": "calico",
           "etcd_endpoints": "__ETCD_ENDPOINTS__",
-          "etcd_key_file": "__ETCD_KEY_FILE__",
-          "etcd_cert_file": "__ETCD_CERT_FILE__",
-          "etcd_ca_cert_file": "__ETCD_CA_CERT_FILE__",
+          "etcd_key_file": "/etc/kubernetes/cni/net.d/calico-tls/etcd-key",
+          "etcd_cert_file": "/etc/kubernetes/cni/net.d/calico-tls/etcd-cert",
+          "etcd_ca_cert_file": "/etc/kubernetes/cni/net.d/calico-tls/etcd-ca",
           "log_level": "info",
           "policy": {
               "type": "k8s",
@@ -36,7 +42,6 @@ data:
         }
     }
 
-  # You must also populate the Secret below with these files.
   etcd_ca: "/calico-secrets/etcd-ca"
   etcd_cert: "/calico-secrets/etcd-cert"
   etcd_key: "/calico-secrets/etcd-key"

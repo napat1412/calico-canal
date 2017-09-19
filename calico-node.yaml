@@ -23,12 +23,13 @@ spec:
            {"key":"CriticalAddonsOnly", "operator":"Exists"}]
     spec:
       hostNetwork: true
+      serviceAccountName: calico-node
       containers:
         # Runs calico/node container on each Kubernetes node.  This
         # container programs network policy and routes on each
         # host.
         - name: calico-node
-          image: quay.io/calico/node:v0.23.0
+          image: quay.io/calico/node:v1.3.0
           env:
             # The location of the Calico etcd cluster.
             - name: ETCD_ENDPOINTS
@@ -36,18 +37,6 @@ spec:
                 configMapKeyRef:
                   name: calico-config
                   key: etcd_endpoints
-            # Choose the backend to use.
-            - name: CALICO_NETWORKING_BACKEND
-              # value: "none"
-              valueFrom:
-                configMapKeyRef:
-                  name: calico-config
-                  key: calico_backend
-            # Disable file logging so `kubectl logs` works.
-            - name: CALICO_DISABLE_FILE_LOGGING
-              value: "true"
-            - name: NO_DEFAULT_POOLS
-              value: "true"
             # Location of the CA certificate for etcd.
             - name: ETCD_CA_CERT_FILE
               valueFrom:
@@ -66,38 +55,40 @@ spec:
                 configMapKeyRef:
                   name: calico-config
                   key: etcd_cert
+            # Choose the backend to use.
+            - name: CALICO_NETWORKING_BACKEND
+              valueFrom:
+                configMapKeyRef:
+                  name: calico-config
+                  key: calico_backend
+            # Disable file logging so `kubectl logs` works.
+            - name: CALICO_DISABLE_FILE_LOGGING
+              value: "true"
+
           securityContext:
             privileged: true
+          resources:
+            requests:
+              cpu: 250m
           volumeMounts:
             - mountPath: /lib/modules
               name: lib-modules
-              readOnly: false
+              readOnly: true
             - mountPath: /var/run/calico
               name: var-run-calico
               readOnly: false
-            - mountPath: /etc/resolv.conf
-              name: dns
-              readOnly: true
             - mountPath: /calico-secrets
               name: etcd-certs
         # This container installs the Calico CNI binaries
         # and CNI network config file on each node.
-        # Documentation: https://github.com/projectcalico/calico-cni/blob/master/k8s-install/scripts/install-cni.sh
         - name: install-cni
-          image: quay.io/calico/cni:v1.5.2
-          imagePullPolicy: Always
+          image: quay.io/calico/cni:v1.9.1
           command: ["/install-cni.sh"]
           env:
             # We set this to something that won't be read as we are using per
             # host cni conf files
             - name: CNI_CONF_NAME
               value: "10-calico.conf"
-            # The directory on the host where CNI networks are installed.
-            # This is used for populating absolute paths in the CNI network
-            # config to assets which are installed in the CNI network config
-            # directory.
-            - name: CNI_NET_DIR
-              value: "/etc/kubernetes/cni/net.d"
             # The location of the Calico etcd cluster.
             - name: ETCD_ENDPOINTS
               valueFrom:
@@ -132,9 +123,6 @@ spec:
         - name: cni-net-dir
           hostPath:
             path: /etc/kubernetes/cni/net.d
-        - name: dns
-          hostPath:
-            path: /etc/resolv.conf
         # Mount in the etcd TLS secrets.
         - name: etcd-certs
           secret:
